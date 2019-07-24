@@ -4,8 +4,8 @@
 // Generated with Bot Builder V4 SDK Template for Visual Studio EmptyBot v4.3.0
 
 using System;
-using System.Linq;
 using System.Collections.Generic;
+using System.Linq;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -28,7 +28,8 @@ public class Startup
         Configuration = configuration;
     }
 
-    public IConfiguration Configuration {
+    public IConfiguration Configuration
+    {
         get;
     }
 
@@ -74,25 +75,6 @@ public class Startup
 
         // Create the bot as a transient. In this case the ASP Controller is expecting an IBot.
         services.AddTransient<IBot, AuthBot<MainDialog>>();
-
-        services.AddAuthentication(options =>
-        {
-            options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
-        })
-        .AddCookie(options =>
-        {
-            options.LoginPath = "/signin";
-            options.LogoutPath = "/signout";
-        })
-        .AddVisualStudio(options =>
-        {
-            var scopes = Configuration["VSTS_SCOPES"].Split(" ").ToList();
-            scopes.ForEach(scope => options.Scope.Add(scope));
-
-            options.ClientId = Configuration["VSTS_CLIENT_ID"];
-            options.ClientSecret = Configuration["VSTS_CLIENT_SECRET"];
-            options.SaveTokens = true;
-        });
     }
 
     // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -109,7 +91,6 @@ public class Startup
 
         app.UseDefaultFiles();
         app.UseStaticFiles();
-        app.UseAuthentication();
         app.UseSession();
 
         //app.UseHttpsRedirection();
