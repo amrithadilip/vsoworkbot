@@ -35,6 +35,8 @@ msbuild.wrn
 
 # Visual Studio 2015
 .vs/
+app.config
 
 # Bot files
 *.bot
+appsettings.json

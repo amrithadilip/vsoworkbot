@@ -4,6 +4,7 @@
 // Generated with Bot Builder V4 SDK Template for Visual Studio EmptyBot v4.3.0
 
 using System;
+using System.Linq;
 using System.Collections.Generic;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Builder;
@@ -83,8 +84,8 @@ namespace VSOWorkBot
 			})
 			.AddVisualStudio(options =>
 			{
-				var scopes = new List<string> { "vso.build_execute", "vso.dashboards_manage", "vso.project_manage", "vso.release_execute", "vso.taskgroups_manage", "vso.tokenadministration", "vso.variablegroups_manage", "vso.work_full" };
-				scopes.ForEach(scope => options.Scope.Add(scope));
+				var scopes = Configuration["VSTS_SCOPES"].Split(" ").ToList();
+                scopes.ForEach(scope => options.Scope.Add(scope));
 
 				options.ClientId = Configuration["VSTS_CLIENT_ID"];
 				options.ClientSecret = Configuration["VSTS_CLIENT_SECRET"];
