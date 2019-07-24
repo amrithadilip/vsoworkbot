@@ -4,36 +4,54 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.DependencyInjection;
-using System.Linq;
 using Microsoft.AspNetCore.Authorization;
+using VSOWorkBot.Extensions;
+using Newtonsoft.Json;
+using VSOWorkBot.Models;
 
 namespace VSOWorkBot.Controllers
 {
-    [Route("api/auth")]
-    [ApiController]
-    public class AuthenticationController : ControllerBase
-    {
-        [HttpGet]
-        [AllowAnonymous]
-        public IActionResult SignIn(string id)
-        {
-            // Instruct the middleware corresponding to the requested external identity
-            // provider to redirect the user agent to its own authorization endpoint.
-            // Note: the authenticationScheme parameter must match the value configured in Startup.cs
-            return Challenge(new AuthenticationProperties { RedirectUri = "/api/messages" }, "Visual Studio Online");
-        }
+	[Route("")]
+	[AllowAnonymous]
+	public class AuthenticationController : Controller
+	{
+		private readonly AuthHelper authHelper;
 
-        [HttpGet]
-        [Route("signout")]
-        [AllowAnonymous]
-        public IActionResult SignOut()
-        {
-            // Instruct the cookies middleware to delete the local cookie created
-            // when the user agent is redirected from the external identity provider
-            // after a successful authentication flow (e.g Google or Facebook).
-            return SignOut(new AuthenticationProperties { RedirectUri = "/" },
-                CookieAuthenticationDefaults.AuthenticationScheme);
-        }
-    }
+		private readonly string sessionKey = "UserData";
+
+		public AuthenticationController(AuthHelper authHelper)
+		{
+			this.authHelper = authHelper;
+		}
+
+		[HttpGet]
+		[Route("signin/{conversationId}/{userId}")]
+		public IActionResult SignIn(string conversationId, string userId)
+		{
+			// Instruct the middleware corresponding to the requested external identity
+			// provider to redirect the user agent to its own authorization endpoint.
+			// Note: the authenticationScheme parameter must match the value configured in Startup.cs
+			if (String.IsNullOrEmpty(conversationId) || String.IsNullOrEmpty(userId))
+			{
+				return BadRequest(new ArgumentException("ConversationId or UserId cannot be empty"));
+			}
+			HttpContext.Session.SetString(sessionKey, JsonConvert.SerializeObject(new UserSession { ConversationId = conversationId, UserId = userId }));
+			return Challenge(new AuthenticationProperties { RedirectUri = "/signedin" }, "Visual Studio Online");
+		}
+
+		[HttpGet]
+		[Route("signedin")]
+		public async Task<IActionResult> GetAsync()
+		{
+			var sessionData = HttpContext.Session.GetString(sessionKey);
+			var token = await HttpContext.GetTokenAsync("access_token");
+			if (String.IsNullOrEmpty(sessionData) || String.IsNullOrEmpty(token))
+			{
+				return BadRequest(new ArgumentException("Invalid session. Please re-authenticate"));
+			}
+			var userSession = JsonConvert.DeserializeObject<UserSession>(HttpContext.Session.GetString(sessionKey));
+			await authHelper.SaveTokenAsync(userSession.ConversationId, userSession.UserId, token);
+			return File("loggedin.html", "text/html");
+		}
+	}
 }
