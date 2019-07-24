@@ -18,6 +18,8 @@ using Microsoft.Extensions.DependencyInjection;
 using VSOWorkBot.Bots;
 using VSOWorkBot.Dialogs;
 using VSOWorkBot.Extensions;
+using Newtonsoft.Json.Linq;
+using VSOWorkBot.Api;
 
 namespace VSOWorkBot
 {
