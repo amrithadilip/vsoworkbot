@@ -5,100 +5,112 @@
 
 using System;
 using System.Collections.Generic;
-using System.Net.Http;
-using System.Net.Http.Headers;
 using Microsoft.AspNetCore.Authentication.Cookies;
-using Microsoft.AspNetCore.Authentication.OAuth;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Bot.Builder;
 using Microsoft.Bot.Builder.Integration.AspNet.Core;
 using Microsoft.Bot.Connector.Authentication;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Newtonsoft.Json.Linq;
+using VSOWorkBot.Bots;
+using VSOWorkBot.Dialogs;
+using VSOWorkBot.Extensions;
 
 namespace VSOWorkBot
 {
-  public class Startup
-  {
-    public Startup(IConfiguration configuration)
-    {
-      Configuration = configuration;
-    }
+	public class Startup
+	{
+		public Startup(IConfiguration configuration)
+		{
+			Configuration = configuration;
+		}
 
-    public IConfiguration Configuration { get; }
+		public IConfiguration Configuration { get; }
 
-    // This method gets called by the runtime. Use this method to add services to the container.
-    public void ConfigureServices(IServiceCollection services)
-    {
-      services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_1);
+		// This method gets called by the runtime. Use this method to add services to the container.
+		public void ConfigureServices(IServiceCollection services)
+		{
+			services.AddMvc()
+				.SetCompatibilityVersion(CompatibilityVersion.Version_2_1);
 
-      // Create the credential provider to be used with the Bot Framework Adapter.
-      services.AddSingleton<ICredentialProvider, ConfigurationCredentialProvider>();
+			// Create the Bot Framework Adapter with error handling enabled.
+			services.AddSingleton<IBotFrameworkHttpAdapter, AdapterWithErrorHandler>();
 
-      // Create the Bot Framework Adapter.
-      services.AddSingleton<IBotFrameworkHttpAdapter, BotFrameworkHttpAdapter>();
+			// Create the storage we'll be using for User and Conversation state. (Memory is great for testing purposes.)
+			services.AddSingleton<IStorage, MemoryStorage>();
 
-      // Create the bot as a transient. In this case the ASP Controller is expecting an IBot.
-      services.AddTransient<IBot, VSOWorkBot>();
+			// Create the User state. (Used in this bot's Dialog implementation.)
+			services.AddSingleton<UserState>();
 
-      services.AddAuthentication(options =>
-      {
-        options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
-      })
-      .AddCookie(options =>
-      {
-        options.LoginPath = "/api/auth";
-        options.LogoutPath = "/api/auth/signout";
-      })
-      .AddVisualStudio(options =>
-      {
-        var scopes = new List<string> { "vso.build_execute", "vso.dashboards_manage", "vso.project_manage", "vso.release_execute", "vso.taskgroups_manage", "vso.tokenadministration", "vso.variablegroups_manage", "vso.work_full" };
-        scopes.ForEach(scope => options.Scope.Add(scope));
+			// Create the Conversation state. (Used by the Dialog system itself.)
+			services.AddSingleton<ConversationState>();
 
-        options.ClientId = Environment.GetEnvironmentVariable("VSTS_CLIENT_ID");
-        options.ClientSecret = Environment.GetEnvironmentVariable("VSTS_CLIENT_SECRET");
+			// Create the credential provider to be used with the Bot Framework Adapter.
+			services.AddSingleton<ICredentialProvider, ConfigurationCredentialProvider>();
 
-        // options.Events = new OAuthEvents
-        // {
-        //   OnCreatingTicket = async context =>
-        //   {
-        //     var request = new HttpRequestMessage(HttpMethod.Get, context.Options.UserInformationEndpoint);
-        //     request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-        //     request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", context.AccessToken);
+			// The Dialog that will be run by the bot.
+			services.AddSingleton<MainDialog>();
 
-        //     var response = await context.Backchannel.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, context.HttpContext.RequestAborted);
-        //     response.EnsureSuccessStatusCode();
+			// Helper to access APIs that perform Authentication
+			services.AddSingleton<AuthHelper>();
 
-        //     var user = JObject.Parse(await response.Content.ReadAsStringAsync());
+			// Provides support for InMemory session stores
+			services.AddDistributedMemoryCache();
 
-        //     context.RunClaimActions(user);
-        //   }
-        // };
-      });
-    }
+			// Enable ASP.Net Core sessions
+			services.AddSession(options =>
+			{
+				// Set the session expiry to 5 minutes. 
+				// After that we clear it all out.
+				options.IdleTimeout = TimeSpan.FromMinutes(5);
+				options.Cookie.HttpOnly = true;
+				options.Cookie.IsEssential = true;
+			});
 
-    // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-    public void Configure(IApplicationBuilder app, IHostingEnvironment env)
-    {
-      if (env.IsDevelopment())
-      {
-        app.UseDeveloperExceptionPage();
-      }
-      else
-      {
-        app.UseHsts();
-      }
+			// Create the bot as a transient. In this case the ASP Controller is expecting an IBot.
+			services.AddTransient<IBot, AuthBot<MainDialog>>();
 
-      app.UseDefaultFiles();
-      app.UseStaticFiles();
-      app.UseAuthentication();
+			services.AddAuthentication(options =>
+			{
+				options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+			})
+			.AddCookie(options =>
+			{
+				options.LoginPath = "/signin";
+				options.LogoutPath = "/signout";
+			})
+			.AddVisualStudio(options =>
+			{
+				var scopes = new List<string> { "vso.build_execute", "vso.dashboards_manage", "vso.project_manage", "vso.release_execute", "vso.taskgroups_manage", "vso.tokenadministration", "vso.variablegroups_manage", "vso.work_full" };
+				scopes.ForEach(scope => options.Scope.Add(scope));
 
-      //app.UseHttpsRedirection();
-      app.UseMvc();
-    }
-  }
+				options.ClientId = Configuration["VSTS_CLIENT_ID"];
+				options.ClientSecret = Configuration["VSTS_CLIENT_SECRET"];
+				options.SaveTokens = true;
+			});
+		}
+
+		// This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
+		public void Configure(IApplicationBuilder app, IHostingEnvironment env)
+		{
+			if (env.IsDevelopment())
+			{
+				app.UseDeveloperExceptionPage();
+			}
+			else
+			{
+				app.UseHsts();
+			}
+
+			app.UseDefaultFiles();
+			app.UseStaticFiles();
+			app.UseAuthentication();
+			app.UseSession();
+
+			//app.UseHttpsRedirection();
+			app.UseMvc();
+		}
+	}
 }
