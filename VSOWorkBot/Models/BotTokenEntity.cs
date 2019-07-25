@@ -1,9 +1,9 @@
-using System;
-using Microsoft.WindowsAzure.Storage.Table;
-
 namespace VSOWorkBot.Models
 {
-	public class BotTokenEntity : TableEntity
+    using System;
+    using Microsoft.WindowsAzure.Storage.Table;
+
+    public class BotTokenEntity : TableEntity
 	{
 		public DateTime ExpiresAt { get; set; }
 

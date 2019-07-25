@@ -10,23 +10,76 @@
     using Microsoft.VisualStudio.Services.WebApi.Patch.Json;
     using Microsoft.VisualStudio.Services.WebApi.Patch;
     using System.Collections.Generic;
+    using System.Linq;
+    using WorkItemType = Models.WorkItemType;
+    using VSOWorkBot.Interfaces;
+    using Microsoft.Extensions.Logging;
+    using VSOWorkBot.Models;
 
-    public static class VsoApiController
+    public class VsoApiController : IVsoApiController
     {
+        private readonly ILogger logger;
+
         public enum ApiType
         {
             WorkItem,
             Git,
         };
 
-        public enum WorkItemType
+        public VsoApiController(ILogger logger)
         {
-            Bug,
-            Task,
-            Feature,
-        };
+            logger.RequireNotNull();
+            this.logger = logger;
+        }
 
-        public static async Task<WorkItem> GetWorkItem(string id, string projectCollection, string projectName)
+        public async Task<IEnumerable<WorkItem>> GetWorkItemsFromWorkItemDetailsAsync(string projectCollection, string projectName, WorkItemDetails workItemDetails)
+        {
+            return await GetWorkItemByQueryAsync(projectCollection, projectName, ContructWiqlQuery(workItemDetails)).ConfigureAwait(false);
+        }
+
+        public async Task<IEnumerable<WorkItem>> GetWorkItemByQueryAsync(string projectCollection, string projectName, Wiql wiql)
+        {
+            var vssCredentials = new VssBasicCredential(string.Empty, "lckkdu5e3h64pm2xg434ku7daolewtvv27wyua7rm7xopcy23wca");
+            VssConnection vssConnection = new VssConnection(GenerateBaseApiUri(projectCollection), vssCredentials);
+            IEnumerable<WorkItem> workItems = new List<WorkItem>();
+            using (var client = vssConnection.GetClient<WorkItemTrackingHttpClient>())
+            {
+                try
+                {
+                    var workItemQueryResult = await client.QueryByWiqlAsync(wiql).ConfigureAwait(false);
+                    if (workItemQueryResult?.WorkItems.Count() == 0)
+                    {
+                        logger.LogInformation($"No results found using query for project collection: {projectCollection} with project name: {projectName}");
+                    }
+
+                    //need to get the list of our work item ids and put them into an array
+                    List<int> list = new List<int>();
+                    foreach (var item in workItemQueryResult.WorkItems)
+                    {
+                        list.Add(item.Id);
+                    }
+                    int[] arr = list.ToArray();
+
+                    //build a list of the fields we want to see
+                    string[] fields = new string[3];
+                    fields[0] = "System.Id";
+                    fields[1] = "System.Title";
+                    fields[2] = "System.State";
+
+                    //get work items for the ids found in query
+                    workItems = await client.GetWorkItemsAsync(arr, fields, workItemQueryResult.AsOf);
+                    return workItems;
+                }
+                catch (Exception ex)
+                {
+                    this.logger.LogError($"{nameof(GetWorkItemByQueryAsync)} Error occured while fetching work items {ex}");
+                }
+            }
+
+            return workItems;
+        }
+
+        public async Task<WorkItem> GetWorkItemAsync(string id, string projectCollection, string projectName)
         {
             id.RequireNotNull();
             int workItemId = 0;
@@ -36,30 +89,27 @@
             }
 
             var vssCredentials = new VssBasicCredential(string.Empty, "lckkdu5e3h64pm2xg434ku7daolewtvv27wyua7rm7xopcy23wca");
-            Uri uri = new Uri($"https://dev.azure.com/{projectCollection}");
-            VssConnection vssConnection = new VssConnection(uri, vssCredentials);
+            VssConnection vssConnection = new VssConnection(GenerateBaseApiUri(projectCollection), vssCredentials);
             WorkItem workItem = default(WorkItem);
             using (var client = vssConnection.GetClient<WorkItemTrackingHttpClient>())
             {
                 try
                 {
                     workItem = await client.GetWorkItemAsync(workItemId).ConfigureAwait(false);
-
                 }
                 catch (Exception ex)
                 {
-                    ex.ToString();
+                    this.logger.LogError($"{nameof(GetWorkItemAsync)} Error occured while fetching work items {ex}");
                 }
             }
 
             return workItem;
         }
 
-        public static async Task<WorkItem> CreateWorkItem(string projectCollection, string projectName, string projectAreaPath, string title, string description, string reproSteps, string priority, string severity, WorkItemType workItemType)
+        public async Task<WorkItem> CreateWorkItemAsync(string projectCollection, string projectName, string projectAreaPath, string title, string description, string reproSteps, string priority, string severity, WorkItemType workItemType)
         {
             var vssCredentials = new VssBasicCredential(string.Empty, "lckkdu5e3h64pm2xg434ku7daolewtvv27wyua7rm7xopcy23wca");
-            Uri uri = new Uri($"https://dev.azure.com/{projectCollection}");
-            VssConnection vssConnection = new VssConnection(uri, vssCredentials);
+            VssConnection vssConnection = new VssConnection(GenerateBaseApiUri(projectCollection), vssCredentials);
             WorkItem workItem = default(WorkItem);
             using (var client = vssConnection.GetClient<WorkItemTrackingHttpClient>())
             {
@@ -127,13 +177,13 @@
                 }
                 catch (Exception ex)
                 {
-                    ex.ToString();
+                    this.logger.LogError($"{nameof(CreateWorkItemAsync)} Error occured while creating a work items with execption: {ex}");
                     return null;
                 }
             }
         }
 
-        public static async Task<WorkItem> UpdateWorkItem(string id, string projectCollection, IDictionary<string, string> fieldToValueMappings)
+        public async Task<WorkItem> UpdateWorkItemAsync(string id, string projectCollection, IDictionary<string, string> fieldToValueMappings)
         {
             id.RequireNotNull();
             int workItemId = 0;
@@ -143,8 +193,7 @@
             }
 
             var vssCredentials = new VssBasicCredential(string.Empty, "lckkdu5e3h64pm2xg434ku7daolewtvv27wyua7rm7xopcy23wca");
-            Uri uri = new Uri($"https://dev.azure.com/{projectCollection}");
-            VssConnection vssConnection = new VssConnection(uri, vssCredentials);
+            VssConnection vssConnection = new VssConnection(GenerateBaseApiUri(projectCollection), vssCredentials);
             WorkItem workItem = default(WorkItem);
             using (var client = vssConnection.GetClient<WorkItemTrackingHttpClient>())
             {
@@ -170,23 +219,28 @@
                 }
                 catch (Exception ex)
                 {
-                    ex.ToString();
+                    this.logger.LogError($"{nameof(UpdateWorkItemAsync)} Error occured while updating work item with id {id} with exception: {ex}");
                     return null;
                 }
             }
         }
 
-        public static string GenerateBaseApiUri(string instance, string projectCollection, string projectName, ApiType apiType, string id)
+        private static Uri GenerateBaseApiUri(string projectCollection)
         {
-            string baseUri = $"https://{instance}/{projectCollection}/{projectName}/_apis";
-            switch(apiType)
+            return new Uri($"https://dev.azure.com/{projectCollection}");
+        }
+
+        private static Wiql ContructWiqlQuery(WorkItemDetails workItemDetails)
+        {
+            return new Wiql()
             {
-                case ApiType.WorkItem:
-                    return $"{baseUri}/workitems/{id}";
-                case ApiType.Git:
-                    return $"{baseUri}/git/{id}";
-                default: return baseUri;
-            }
+                Query = "Select [State], [Title] [Description]" +
+                    "From WorkItems " +
+                    "Where [Work Item Type] = 'Bug' " +
+                    "And [System.TeamProject] = '" + "Cortana" + "' " +
+                    "And [System.State] <> 'Active' " +
+                    "Order By [State] Asc, [Changed Date] Desc"
+            };
         }
     }
 }

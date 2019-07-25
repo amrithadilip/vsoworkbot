@@ -1,24 +1,28 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
-using System.Net.Http;
-using System.Threading;
-using System.Threading.Tasks;
-using Microsoft.Bot.Builder;
-using Microsoft.Bot.Builder.Dialogs;
-using Microsoft.Bot.Schema;
-using VSOWorkBot.Extensions;
-
 namespace VSOWorkBot.Dialogs
 {
-	public class LogoutDialog : ComponentDialog
+    using System.Threading;
+    using System.Threading.Tasks;
+    using Microsoft.Bot.Builder;
+    using Microsoft.Bot.Builder.Dialogs;
+    using Microsoft.Bot.Schema;
+    using Microsoft.Extensions.Configuration;
+    using VSOWorkBot.Extensions;
+    using VSOWorkBot.Helpers;
+
+    public class CancelAndLogoutDialog : ComponentDialog
 	{
 		private readonly AuthHelper authHelper;
 
-		public LogoutDialog(string id, AuthHelper authHelper)
+        private readonly IConfiguration configuration;
+
+        public CancelAndLogoutDialog(string id, AuthHelper authHelper, IConfiguration configuration)
 			: base(id)
 		{
 			this.authHelper = authHelper;
+            this.configuration = configuration;
 		}
 
 		protected string ConnectionName { get; }
@@ -51,12 +55,19 @@ namespace VSOWorkBot.Dialogs
 			{
 				var text = innerDc.Context.Activity.Text.ToLowerInvariant();
 
-				if (text == "logout")
-				{
-					await this.authHelper.SignOutAsync(innerDc.Context.Activity);
-					await innerDc.Context.SendActivityAsync(MessageFactory.Text("You have been signed out."), cancellationToken);
-					return await innerDc.CancelAllDialogsAsync(cancellationToken);
-				}
+                var result = await LuisHelper.GetLuisResult(this.configuration, text).ConfigureAwait(false);
+                switch (result?.TopScoringIntent?.Intent)
+                {
+                    case "signout":
+                        await this.authHelper.SignOutAsync(innerDc.Context.Activity);
+                        await innerDc.Context.SendActivityAsync(MessageFactory.Text("You have been signed out."), cancellationToken);
+                        break;
+                    case "Calendar.Cancel":
+                        await innerDc.Context.SendActivityAsync($"Cancelling", cancellationToken: cancellationToken);
+                        break;
+                }
+
+                return await innerDc.CancelAllDialogsAsync(cancellationToken);
 			}
 
 			return null;

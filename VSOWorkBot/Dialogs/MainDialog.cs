@@ -10,10 +10,12 @@ using Microsoft.Bot.Schema;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using VSOWorkBot.Extensions;
+using VSOWorkBot.Helpers;
+using VSOWorkBot.Models;
 
 namespace VSOWorkBot.Dialogs
 {
-	public class MainDialog : LogoutDialog
+	public class MainDialog : CancelAndLogoutDialog
 	{
 		protected readonly ILogger logger;
 
@@ -23,23 +25,36 @@ namespace VSOWorkBot.Dialogs
 
 		protected readonly IStatePropertyAccessor<string> tokenAccessor;
 
+        protected readonly IConfiguration configuration;
 
-		public MainDialog(IConfiguration configuration, ILogger<MainDialog> logger, UserState userState, AuthHelper authHelper)
-			: base(nameof(MainDialog), authHelper)
+        public MainDialog(IConfiguration configuration, ILogger<MainDialog> logger, IBotTelemetryClient telemetryClient, UserState userState, AuthHelper authHelper)
+			: base(nameof(MainDialog), authHelper, configuration)
 		{
 			this.logger = logger;
 			this.authHelper = authHelper;
 			this.userState = userState;
 			this.tokenAccessor = userState.CreateProperty<string>("VSOToken");
+            this.configuration = configuration;
+            TelemetryClient = telemetryClient;
 
-			AddDialog(new WaterfallDialog(nameof(WaterfallDialog), new WaterfallStep[]
-			{
-				PromptStepAsync,
-				LoginCompleteAsync,
-				DisplayTokenAsync
-			}));
+            AddDialog(new TextPrompt(nameof(TextPrompt)));
+            AddDialog(new GetWorkItemDialog(nameof(GetWorkItemDialog), authHelper);
+            AddDialog(new ConfirmPrompt(nameof(ConfirmPrompt))
+            {
+                TelemetryClient = telemetryClient,
+            });
+            AddDialog(new WaterfallDialog(nameof(WaterfallDialog), new WaterfallStep[]
+            {
+                PromptStepAsync,
+                LoginCompleteAsync,
+                DisplayTokenAsync,
+                IntroStepAsync,
+            })
+            {
+                TelemetryClient = telemetryClient,
+            });
 
-			AddDialog(new ConfirmPrompt(nameof(ConfirmPrompt)));
+			
 
 			// The initial child Dialog to run.
 			InitialDialogId = nameof(WaterfallDialog);
@@ -92,7 +107,38 @@ namespace VSOWorkBot.Dialogs
 			return await stepContext.EndDialogAsync(cancellationToken: cancellationToken);
 		}
 
-		private ThumbnailCard GetSignInCard(Activity activity)
+        private async Task<DialogTurnResult> IntroStepAsync(WaterfallStepContext stepContext, CancellationToken cancellationToken)
+        {
+            if (string.IsNullOrEmpty(configuration["LuisAppId"]) || string.IsNullOrEmpty(configuration["LuisAPIKey"]) || string.IsNullOrEmpty(configuration["LuisAPIHostName"]))
+            {
+                await stepContext.Context.SendActivityAsync(
+                    MessageFactory.Text("NOTE: LUIS is not configured. To enable all capabilities, add 'LuisAppId', 'LuisAPIKey' and 'LuisAPIHostName' to the appsettings.json file."), cancellationToken);
+                return await stepContext.NextAsync(null, cancellationToken);
+            }
+            else
+            {
+                return await stepContext.PromptAsync(nameof(TextPrompt), new PromptOptions { Prompt = MessageFactory.Text("What can I help you with today?\nSay something like \"Create a bug\" or \"Get active bugs for me\"") }, cancellationToken);
+            }
+        }
+
+        private async Task<DialogTurnResult> ActStepAsync(WaterfallStepContext stepContext, CancellationToken cancellationToken)
+        {
+            // Call LUIS and gather any potential booking details. (Note the TurnContext has the response to the prompt.)
+            var bookingDetails = stepContext.Result != null
+                    ?
+                await LuisHelper.ExecuteLuisQuery(TelemetryClient, configuration, this.logger, stepContext.Context, cancellationToken)
+                    :
+                new WorkItemDetails();
+
+            // In this sample we only have a single Intent we are concerned with. However, typically a scenario
+            // will have multiple different Intents each corresponding to starting a different child Dialog.
+
+            // Run the BookingDialog giving it whatever details we have from the LUIS call, it will fill out the remainder.
+            return await stepContext.BeginDialogAsync(nameof(BookingDialog), bookingDetails, cancellationToken);
+        }
+
+
+        private ThumbnailCard GetSignInCard(Activity activity)
 		{
 			ThumbnailCard thumbnailCard = new ThumbnailCard()
 			{
