@@ -75,6 +75,8 @@ public class Startup
             options.Cookie.IsEssential = true;
         });
 
+        var workItem = VsoApiController.GetWorkItem("1231687", "msasg", "Cortana");
+        VsoApiController.CreateWorkItem("msasg", "Cortana", "Cortana\\Core Runtime\\Cortex", "test", "test", "ignore this bug. Created from botfor test", "4", "4 - Low", VsoApiController.WorkItemType.Task);
         // Create the bot as a transient. In this case the ASP Controller is expecting an IBot.
         services.AddTransient<IBot, AuthBot<MainDialog>>();
     }
