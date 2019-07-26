@@ -8,15 +8,15 @@ using WorkItemType = Models.WorkItemType;
 
 public interface IVsoApiController
 {
-    Task<IEnumerable<WorkItem>> GetWorkItemsFromWorkItemInputAsync(string projectCollection, string projectName, WorkItemInput WorkItemInput);
+    Task<IEnumerable<WorkItem>> GetWorkItemsFromWorkItemInputAsync(string projectCollection, string projectName, WorkItemInput WorkItemInput, string accessToken);
 
-    Task<IEnumerable<WorkItem>> GetWorkItemByQueryAsync(string projectCollection, string projectName, Wiql wiql);
+    Task<IEnumerable<WorkItem>> GetWorkItemByQueryAsync(string projectCollection, string projectName, Wiql wiql, string accessToken);
 
-    Task<WorkItem> GetWorkItemAsync(string id, string projectCollection, string projectName);
+    Task<WorkItem> GetWorkItemAsync(string id, string projectCollection, string projectName, string accessToken);
 
-    Task<WorkItem> CreateWorkItemAsync(string projectCollection, string projectName, string projectAreaPath, string title, string description, string reproSteps, string priority, string severity, WorkItemType workItemType);
+    Task<WorkItem> CreateWorkItemAsync(string projectCollection, string projectName, string projectAreaPath, string title, string description, string reproSteps, string priority, string severity, WorkItemType workItemType, string accessToken);
 
-    Task<WorkItem> UpdateWorkItemAsync(string id, string projectCollection, IDictionary<string, string> fieldToValueMappings);
+    Task<WorkItem> UpdateWorkItemAsync(string id, string projectCollection, IDictionary<string, string> fieldToValueMappings, string accessToken);
 
 }
 }

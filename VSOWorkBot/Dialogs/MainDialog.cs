@@ -38,7 +38,7 @@ public class MainDialog : CancelAndLogoutDialog
         this.tokenAccessor = userState.CreateProperty<string>("VSOToken");
         this.configuration = configuration;
         TelemetryClient = telemetryClient;
-        IVsoApiController vsoApiController = new VsoApiController(logger);
+        IVsoApiController vsoApiController = new VsoApiHelper(logger);
 
         AddDialog(new GetWorkItemDialog(configuration, logger, telemetryClient, userState, authHelper, vsoApiController));
         AddDialog(new SignInDialog(configuration, logger, telemetryClient, userState, authHelper));

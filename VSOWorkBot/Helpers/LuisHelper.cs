@@ -27,7 +27,7 @@ public static class LuisHelper
 
     public static async Task<WorkItemInput> ExecuteLuisQuery(IBotTelemetryClient telemetryClient, IConfiguration configuration, ILogger logger, ITurnContext turnContext, CancellationToken cancellationToken)
     {
-        var WorkItemInput = new WorkItemInput();
+        var workItemInput = new WorkItemInput();
 
         try
         {
@@ -55,8 +55,12 @@ public static class LuisHelper
             if (intent == "getvsoitem")
             {
                 // We need to get the result from the LUIS JSON which at every level returns an array.
-                WorkItemInput.workItemStatus = WorkItemStatus.Active.ToString();
-                WorkItemInput.workItemId = "1822662"; // recognizerResult.Entities["From"]?.FirstOrDefault()?["Airport"]?.FirstOrDefault()?.FirstOrDefault()?.ToString();
+                workItemInput.workItemStatus = WorkItemStatus.Active.ToString();
+                Match match = Regex.Match(recognizerResult.Entities["id"].ToString(), @"(\d+)");
+                if (match.Success)
+                {
+                    workItemInput.workItemId = match.Groups[1].Value;
+                }
             }
         }
         catch (Exception e)
@@ -64,7 +68,7 @@ public static class LuisHelper
             logger.LogWarning($"LUIS Exception: {e.Message} Check your LUIS configuration.");
         }
 
-        return WorkItemInput;
+        return workItemInput;
     }
 
     public static async Task<LuisResult> GetLuisResult(IConfiguration configuration, string message)
