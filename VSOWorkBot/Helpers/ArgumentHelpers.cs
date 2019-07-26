@@ -7,18 +7,18 @@
 
 namespace VSOWorkBot.Helpers
 {
-    using System;
+using System;
 
-    // This ASP Controller is created to handle a request. Dependency Injection will provide the Adapter and IBot
-    // implementation at runtime. Multiple different IBot implementations running at different endpoints can be
-    // achieved by specifying a more specific type for the bot constructor argument.
-    public static class ArgumentHelpers
-    {
-        public static void RequireNotNull(this object arg) {
-            if (arg == null)
-            {
-                throw new ArgumentNullException(string.Format("{0} is null.", arg));
-            }
+// This ASP Controller is created to handle a request. Dependency Injection will provide the Adapter and IBot
+// implementation at runtime. Multiple different IBot implementations running at different endpoints can be
+// achieved by specifying a more specific type for the bot constructor argument.
+public static class ArgumentHelpers
+{
+    public static void RequireNotNull(this object arg) {
+        if (arg == null)
+        {
+            throw new ArgumentNullException(string.Format("{0} is null.", arg));
         }
     }
+}
 }
