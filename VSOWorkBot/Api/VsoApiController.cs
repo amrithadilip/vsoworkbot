@@ -34,10 +34,10 @@ public class VsoApiController : IVsoApiController
         this.logger = logger;
     }
 
-        public static GitPullRequest CreatePullRequest(GitRepository repo)
-        {
-            var vssCredentials = new VssBasicCredential(string.Empty, string.Empty);
-            VssConnection vssConnection = new VssConnection(GenerateBaseApiUri(), vssCredentials);
+    public static GitPullRequest CreatePullRequest(GitRepository repo)
+    {
+        var vssCredentials = new VssBasicCredential(string.Empty, string.Empty);
+        VssConnection vssConnection = new VssConnection(GenerateBaseApiUri(), vssCredentials);
 
         using (GitHttpClient gitClient = vssConnection.GetClient<GitHttpClient>())
         {
@@ -53,11 +53,11 @@ public class VsoApiController : IVsoApiController
         }
     }
 
-        public async Task<IEnumerable<TeamProjectCollectionReference>> GetProjectCollections()
-        {
-            var vssCredentials = new VssBasicCredential(string.Empty, string.Empty);
-            VssConnection vssConnection = new VssConnection(GenerateBaseApiUri(), vssCredentials);
-            IEnumerable<TeamProjectCollectionReference> projectCollections = new List<TeamProjectCollectionReference>();
+    public async Task<IEnumerable<TeamProjectCollectionReference>> GetProjectCollections()
+    {
+        var vssCredentials = new VssBasicCredential(string.Empty, string.Empty);
+        VssConnection vssConnection = new VssConnection(GenerateBaseApiUri(), vssCredentials);
+        IEnumerable<TeamProjectCollectionReference> projectCollections = new List<TeamProjectCollectionReference>();
 
         using (var projectCollectionClient = vssConnection.GetClient<ProjectCollectionHttpClient>())
         {
@@ -77,20 +77,20 @@ public class VsoApiController : IVsoApiController
         return await GetWorkItemByQueryAsync(projectCollection, projectName, ContructWiqlQuery(WorkItemInput)).ConfigureAwait(false);
     }
 
-        public async Task<IEnumerable<WorkItem>> GetWorkItemByQueryAsync(string projectCollection, string projectName, Wiql wiql)
+    public async Task<IEnumerable<WorkItem>> GetWorkItemByQueryAsync(string projectCollection, string projectName, Wiql wiql)
+    {
+        var vssCredentials = new VssBasicCredential(string.Empty, string.Empty);
+        VssConnection vssConnection = new VssConnection(GenerateBaseApiUri(projectCollection), vssCredentials);
+        IEnumerable<WorkItem> workItems = new List<WorkItem>();
+        using (var client = vssConnection.GetClient<WorkItemTrackingHttpClient>())
         {
-            var vssCredentials = new VssBasicCredential(string.Empty, string.Empty);
-            VssConnection vssConnection = new VssConnection(GenerateBaseApiUri(projectCollection), vssCredentials);
-            IEnumerable<WorkItem> workItems = new List<WorkItem>();
-            using (var client = vssConnection.GetClient<WorkItemTrackingHttpClient>())
+            try
             {
-                try
+                var workItemQueryResult = await client.QueryByWiqlAsync(wiql).ConfigureAwait(false);
+                if (workItemQueryResult?.WorkItems.Count() == 0)
                 {
-                    var workItemQueryResult = await client.QueryByWiqlAsync(wiql).ConfigureAwait(false);
-                    if (workItemQueryResult?.WorkItems.Count() == 0)
-                    {
-                        logger.LogInformation($"No results found using query for project collection: {projectCollection} with project name: {projectName}");
-                    }
+                    logger.LogInformation($"No results found using query for project collection: {projectCollection} with project name: {projectName}");
+                }
 
                 //need to get the list of our work item ids and put them into an array
                 List<int> list = new List<int>();
@@ -128,34 +128,34 @@ public class VsoApiController : IVsoApiController
             return null;
         }
 
-            var vssCredentials = new VssBasicCredential(string.Empty, string.Empty);
-            VssConnection vssConnection = new VssConnection(GenerateBaseApiUri(projectCollection), vssCredentials);
-            WorkItem workItem = default(WorkItem);
-            using (var client = vssConnection.GetClient<WorkItemTrackingHttpClient>())
+        var vssCredentials = new VssBasicCredential(string.Empty, string.Empty);
+        VssConnection vssConnection = new VssConnection(GenerateBaseApiUri(projectCollection), vssCredentials);
+        WorkItem workItem = default(WorkItem);
+        using (var client = vssConnection.GetClient<WorkItemTrackingHttpClient>())
+        {
+            try
             {
-                try
-                {
-                    workItem = await client.GetWorkItemAsync(workItemId).ConfigureAwait(false);
-                }
-                catch (Exception ex)
-                {
-                    this.logger.LogError($"{nameof(GetWorkItemAsync)} Error occured while fetching work items {ex}");
-                }
+                workItem = await client.GetWorkItemAsync(workItemId).ConfigureAwait(false);
             }
+            catch (Exception ex)
+            {
+                this.logger.LogError($"{nameof(GetWorkItemAsync)} Error occured while fetching work items {ex}");
+            }
+        }
 
         return workItem;
     }
 
-        public async Task<WorkItem> CreateWorkItemAsync(string projectCollection, string projectName, string projectAreaPath, string title, string description, string reproSteps, string priority, string severity, WorkItemType workItemType)
+    public async Task<WorkItem> CreateWorkItemAsync(string projectCollection, string projectName, string projectAreaPath, string title, string description, string reproSteps, string priority, string severity, WorkItemType workItemType)
+    {
+        var vssCredentials = new VssBasicCredential(string.Empty, string.Empty);
+        VssConnection vssConnection = new VssConnection(GenerateBaseApiUri(projectCollection), vssCredentials);
+        WorkItem workItem = default(WorkItem);
+        using (var client = vssConnection.GetClient<WorkItemTrackingHttpClient>())
         {
-            var vssCredentials = new VssBasicCredential(string.Empty, string.Empty);
-            VssConnection vssConnection = new VssConnection(GenerateBaseApiUri(projectCollection), vssCredentials);
-            WorkItem workItem = default(WorkItem);
-            using (var client = vssConnection.GetClient<WorkItemTrackingHttpClient>())
+            try
             {
-                try
-                {
-                    JsonPatchDocument patchDocument = new JsonPatchDocument();
+                JsonPatchDocument patchDocument = new JsonPatchDocument();
 
                 //add fields and their values to your patch document
                 patchDocument.Add(
@@ -232,14 +232,14 @@ public class VsoApiController : IVsoApiController
             return null;
         }
 
-            var vssCredentials = new VssBasicCredential(string.Empty, string.Empty);
-            VssConnection vssConnection = new VssConnection(GenerateBaseApiUri(projectCollection), vssCredentials);
-            WorkItem workItem = default(WorkItem);
-            using (var client = vssConnection.GetClient<WorkItemTrackingHttpClient>())
+        var vssCredentials = new VssBasicCredential(string.Empty, string.Empty);
+        VssConnection vssConnection = new VssConnection(GenerateBaseApiUri(projectCollection), vssCredentials);
+        WorkItem workItem = default(WorkItem);
+        using (var client = vssConnection.GetClient<WorkItemTrackingHttpClient>())
+        {
+            try
             {
-                try
-                {
-                    JsonPatchDocument patchDocument = new JsonPatchDocument();
+                JsonPatchDocument patchDocument = new JsonPatchDocument();
 
                 foreach(var kvp in fieldToValueMappings)
                 {
