@@ -13,32 +13,32 @@ using VSOWorkBot.Helpers;
 
 namespace VSOWorkBot.Bots
 {
-    public class AuthBot<T> : DialogBot<T> where T : Dialog
+public class AuthBot<T> : DialogBot<T> where T : Dialog
+{
+    public AuthBot(ConversationState conversationState, UserState userState, T dialog, ILogger<DialogBot<T>> logger)
+        : base(conversationState, userState, dialog, logger)
     {
-        public AuthBot(ConversationState conversationState, UserState userState, T dialog, ILogger<DialogBot<T>> logger)
-            : base(conversationState, userState, dialog, logger)
-        {
-        }
+    }
 
-        protected override async Task OnMembersAddedAsync(IList<ChannelAccount> membersAdded, ITurnContext<IConversationUpdateActivity> turnContext, CancellationToken cancellationToken)
+    protected override async Task OnMembersAddedAsync(IList<ChannelAccount> membersAdded, ITurnContext<IConversationUpdateActivity> turnContext, CancellationToken cancellationToken)
+    {
+        foreach (var member in turnContext.Activity.MembersAdded)
         {
-            foreach (var member in turnContext.Activity.MembersAdded)
+            if (member.Id != turnContext.Activity.Recipient.Id)
             {
-                if (member.Id != turnContext.Activity.Recipient.Id)
-                {
-                    var cardText = await CardProvider.GetCardText("WelcomeCard").ConfigureAwait(false);
-                    var replyActivity = JsonConvert.DeserializeObject<Activity>(cardText);
-                    await turnContext.SendActivityAsync(replyActivity, cancellationToken);
-                }
+                var cardText = await CardProvider.GetCardText("WelcomeCard").ConfigureAwait(false);
+                var replyActivity = JsonConvert.DeserializeObject<Activity>(cardText);
+                await turnContext.SendActivityAsync(replyActivity, cancellationToken);
             }
         }
-
-        protected override async Task OnTokenResponseEventAsync(ITurnContext<IEventActivity> turnContext, CancellationToken cancellationToken)
-        {
-            Logger.LogInformation("Running dialog with Token Response Event Activity.");
-
-            // Run the Dialog with the new Token Response Event Activity.
-            await Dialog.RunAsync(turnContext, ConversationState.CreateProperty<DialogState>(nameof(DialogState)), cancellationToken);
-        }
     }
+
+    protected override async Task OnTokenResponseEventAsync(ITurnContext<IEventActivity> turnContext, CancellationToken cancellationToken)
+    {
+        Logger.LogInformation("Running dialog with Token Response Event Activity.");
+
+        // Run the Dialog with the new Token Response Event Activity.
+        await Dialog.RunAsync(turnContext, ConversationState.CreateProperty<DialogState>(nameof(DialogState)), cancellationToken);
+    }
+}
 }
