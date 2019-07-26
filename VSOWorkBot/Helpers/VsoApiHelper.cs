@@ -4,7 +4,6 @@
     using Microsoft.VisualStudio.Services.Common;
     using System;
     using Microsoft.TeamFoundation.WorkItemTracking.WebApi;
-    using global::VSOWorkBot.Helpers;
     using System.Threading.Tasks;
     using Microsoft.TeamFoundation.WorkItemTracking.WebApi.Models;
     using Microsoft.VisualStudio.Services.WebApi.Patch.Json;
@@ -17,6 +16,7 @@
     using VSOWorkBot.Models;
     using Microsoft.TeamFoundation.Core.WebApi;
     using Microsoft.TeamFoundation.SourceControl.WebApi;
+    using VSOWorkBot.Extensions;
 
     public class VsoApiHelper : IVsoApiController
     {

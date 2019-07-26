@@ -5,7 +5,7 @@
 
 
 
-namespace VSOWorkBot.Helpers
+namespace VSOWorkBot.Extensions
 {
 using System;
 
