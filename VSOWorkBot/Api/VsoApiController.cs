@@ -32,9 +32,9 @@
             this.logger = logger;
         }
 
-        public async Task<IEnumerable<WorkItem>> GetWorkItemsFromWorkItemDetailsAsync(string projectCollection, string projectName, WorkItemDetails workItemDetails)
+        public async Task<IEnumerable<WorkItem>> GetWorkItemsFromWorkItemInputAsync(string projectCollection, string projectName, WorkItemInput WorkItemInput)
         {
-            return await GetWorkItemByQueryAsync(projectCollection, projectName, ContructWiqlQuery(workItemDetails)).ConfigureAwait(false);
+            return await GetWorkItemByQueryAsync(projectCollection, projectName, ContructWiqlQuery(WorkItemInput)).ConfigureAwait(false);
         }
 
         public async Task<IEnumerable<WorkItem>> GetWorkItemByQueryAsync(string projectCollection, string projectName, Wiql wiql)
@@ -230,7 +230,7 @@
             return new Uri($"https://dev.azure.com/{projectCollection}");
         }
 
-        private static Wiql ContructWiqlQuery(WorkItemDetails workItemDetails)
+        private static Wiql ContructWiqlQuery(WorkItemInput WorkItemInput)
         {
             return new Wiql()
             {

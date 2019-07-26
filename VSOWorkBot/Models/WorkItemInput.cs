@@ -16,7 +16,7 @@
         Closed,
     };
 
-    public class WorkItemDetails
+    public class WorkItemInput
     {
         public string workItemId { get; set; }
 

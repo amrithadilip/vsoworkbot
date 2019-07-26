@@ -8,7 +8,7 @@
 
     public interface IVsoApiController
     {
-        Task<IEnumerable<WorkItem>> GetWorkItemsFromWorkItemDetailsAsync(string projectCollection, string projectName, WorkItemDetails workItemDetails);
+        Task<IEnumerable<WorkItem>> GetWorkItemsFromWorkItemInputAsync(string projectCollection, string projectName, WorkItemInput WorkItemInput);
 
         Task<IEnumerable<WorkItem>> GetWorkItemByQueryAsync(string projectCollection, string projectName, Wiql wiql);
 

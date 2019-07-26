@@ -3,6 +3,7 @@
     using Microsoft.Azure.CognitiveServices.Language.LUIS.Runtime.Models;
     using Microsoft.Bot.Builder;
     using Microsoft.Bot.Builder.AI.Luis;
+    using Microsoft.Bot.Configuration;
     using Microsoft.Extensions.Configuration;
     using Microsoft.Extensions.Logging;
     using Newtonsoft.Json;
@@ -15,7 +16,7 @@
 
     public static class LuisHelper
     {
-        private const string luisURL = @"https://{0}/{1}?subscription-key={2}&timezoneOffset=-480&verbose=true&q={3}";
+        private const string luisURL = @"https://{0}/luis/v2.0/apps/{1}?subscription-key={2}&timezoneOffset=-360&verbose=true&q={3}";
 
         /// <summary>
         /// You only need to say the invocation phrase when starting the skill from outside. Sometimes, users will say it when they're already in the app, which screws up LUIS.
@@ -24,9 +25,9 @@
         private static readonly Regex removeInvocationPhrase = new Regex($"^[a-zA-Z]{{0,5}} (cortana) (for|to|about) (.*)$",
             RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
-        public static async Task<WorkItemDetails> ExecuteLuisQuery(IBotTelemetryClient telemetryClient, IConfiguration configuration, ILogger logger, ITurnContext turnContext, CancellationToken cancellationToken)
+        public static async Task<WorkItemInput> ExecuteLuisQuery(IBotTelemetryClient telemetryClient, IConfiguration configuration, ILogger logger, ITurnContext turnContext, CancellationToken cancellationToken)
         {
-            var workItemDetails = new WorkItemDetails();
+            var WorkItemInput = new WorkItemInput();
 
             try
             {
@@ -46,7 +47,6 @@
 
                 // The actual call to LUIS
                 var recognizerResult = await recognizer.RecognizeAsync(turnContext, cancellationToken);
-
                 if (recognizerResult == null)
                 {
                     logger.LogError($"LUIS returned null for this turn.");
@@ -55,8 +55,8 @@
                 if (intent == "getvsoitem")
                 {
                     // We need to get the result from the LUIS JSON which at every level returns an array.
-                    workItemDetails.workItemStatus = WorkItemStatus.Active;
-                    workItemDetails.workItemId = "dd"; // recognizerResult.Entities["From"]?.FirstOrDefault()?["Airport"]?.FirstOrDefault()?.FirstOrDefault()?.ToString();
+                    WorkItemInput.workItemStatus = WorkItemStatus.Active.ToString();
+                    WorkItemInput.workItemId = "1822662"; // recognizerResult.Entities["From"]?.FirstOrDefault()?["Airport"]?.FirstOrDefault()?.FirstOrDefault()?.ToString();
                 }
             }
             catch (Exception e)
@@ -64,7 +64,7 @@
                 logger.LogWarning($"LUIS Exception: {e.Message} Check your LUIS configuration.");
             }
 
-            return workItemDetails;
+            return WorkItemInput;
         }
 
         public static async Task<LuisResult> GetLuisResult(IConfiguration configuration, string message)

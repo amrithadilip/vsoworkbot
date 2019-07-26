@@ -1,0 +1,65 @@
+{
+  "type": "message",
+  "speak": "Hi! I'm Vso work bot! I'll help you manage your work items!",
+  "attachments": [
+    {
+      "contentType": "application/vnd.microsoft.card.adaptive",
+      "content": {
+        "type": "AdaptiveCard",
+        "version": "1.0",
+        "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
+        "body": [
+          {
+            "type": "ColumnSet",
+            "columns": [
+              {
+                "type": "Column",
+                "width": 3,
+                "spacing": "None",
+                "items": [
+                  {
+                    "type": "ColumnSet",
+                    "columns": [
+                      {
+                        "type": "Column",
+                        "width": 3,
+                        "spacing": "Medium",
+                        "items": [
+                          {
+                            "type": "TextBlock",
+                            "text": "{{bugId}}: {{bugTitle}}",
+                            "weight": "Bolder",
+                            "size": "Large",
+                            "height": "stretch",
+                            "maxLines": 2
+                          },
+                          {
+                            "type": "TextBlock",
+                            "text": "{{bugStatus}}",
+                            "spacing": "None"
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "type": "TextBlock",
+                    "text": "{{bugDescription}}",
+                    "weight": "Bolder",
+                    "spacing": "Medium",
+                    "maxLines": 5
+                  },
+                  {
+                    "type": "TextBlock",
+                    "text": "{{numberOfUpdates}} new updates.",
+                    "spacing": "Large"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}
