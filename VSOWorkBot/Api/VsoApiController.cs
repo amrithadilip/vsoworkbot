@@ -15,6 +15,8 @@
     using VSOWorkBot.Interfaces;
     using Microsoft.Extensions.Logging;
     using VSOWorkBot.Models;
+    using Microsoft.TeamFoundation.Core.WebApi;
+    using Microsoft.TeamFoundation.SourceControl.WebApi;
 
     public class VsoApiController : IVsoApiController
     {
@@ -30,6 +32,44 @@
         {
             logger.RequireNotNull();
             this.logger = logger;
+        }
+
+        public static GitPullRequest CreatePullRequest(GitRepository repo)
+        {
+            var vssCredentials = new VssBasicCredential(string.Empty, "lckkdu5e3h64pm2xg434ku7daolewtvv27wyua7rm7xopcy23wca");
+            VssConnection vssConnection = new VssConnection(GenerateBaseApiUri(), vssCredentials);
+
+            using (GitHttpClient gitClient = vssConnection.GetClient<GitHttpClient>())
+            {
+                GitPullRequest pullRequest = gitClient.GetPullRequestsAsync(
+                    repo.Id,
+                    new GitPullRequestSearchCriteria()
+                    {
+                        Status = PullRequestStatus.Active,
+
+                    }).Result.FirstOrDefault();
+
+                return pullRequest;
+            }
+        }
+
+        public async Task<IEnumerable<TeamProjectCollectionReference>> GetProjectCollections()
+        {
+            var vssCredentials = new VssBasicCredential(string.Empty, "lckkdu5e3h64pm2xg434ku7daolewtvv27wyua7rm7xopcy23wca");
+            VssConnection vssConnection = new VssConnection(GenerateBaseApiUri(), vssCredentials);
+            IEnumerable<TeamProjectCollectionReference> projectCollections = new List<TeamProjectCollectionReference>();
+
+            using (var projectCollectionClient = vssConnection.GetClient<ProjectCollectionHttpClient>())
+            {
+                projectCollections = await projectCollectionClient.GetProjectCollections().ConfigureAwait(false);
+
+                foreach (var collection in projectCollections)
+                {
+                    Console.WriteLine(collection.Name);
+                }
+            }
+
+            return projectCollections;
         }
 
         public async Task<IEnumerable<WorkItem>> GetWorkItemsFromWorkItemInputAsync(string projectCollection, string projectName, WorkItemInput WorkItemInput)
@@ -225,9 +265,9 @@
             }
         }
 
-        private static Uri GenerateBaseApiUri(string projectCollection)
+        private static Uri GenerateBaseApiUri(string projectCollection = null)
         {
-            return new Uri($"https://dev.azure.com/{projectCollection}");
+            return projectCollection != null ? new Uri($"https://dev.azure.com/{projectCollection}") : new Uri($"https://dev.azure.com");
         }
 
         private static Wiql ContructWiqlQuery(WorkItemInput WorkItemInput)

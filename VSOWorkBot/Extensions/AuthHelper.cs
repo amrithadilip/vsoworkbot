@@ -96,6 +96,11 @@ namespace VSOWorkBot.Extensions
         {
             // Query all entities in the table
             var activityEntities = await table.ExecuteAsync(TableOperation.Retrieve<BotTokenEntity>(conversationId, userId, botTokenEntityResolver));
+            if (activityEntities?.Result == null || !(activityEntities.Result is BotTokenEntity))
+            {
+                return null;
+            }
+
             return (activityEntities.Result as BotTokenEntity).Token;
         }
 
