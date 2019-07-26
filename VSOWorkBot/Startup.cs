@@ -3,10 +3,9 @@
 //
 // Generated with Bot Builder V4 SDK Template for Visual Studio EmptyBot v4.3.0
 
+namespace VSOWorkBot
+{
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
@@ -18,9 +17,11 @@ using Microsoft.Extensions.DependencyInjection;
 using VSOWorkBot.Bots;
 using VSOWorkBot.Dialogs;
 using VSOWorkBot.Extensions;
+using VSOWorkBot.Api;
+using Microsoft.ApplicationInsights.Extensibility;
+using Microsoft.Bot.Builder.ApplicationInsights;
+using Microsoft.Bot.Builder.Integration.ApplicationInsights.Core;
 
-namespace VSOWorkBot
-{
 public class Startup
 {
     public Startup(IConfiguration configuration)
@@ -39,9 +40,6 @@ public class Startup
         services.AddMvc()
         .SetCompatibilityVersion(CompatibilityVersion.Version_2_1);
 
-        // Create the Bot Framework Adapter with error handling enabled.
-        services.AddSingleton<IBotFrameworkHttpAdapter, AdapterWithErrorHandler>();
-
         // Create the storage we'll be using for User and Conversation state. (Memory is great for testing purposes.)
         services.AddSingleton<IStorage, MemoryStorage>();
 
@@ -53,6 +51,9 @@ public class Startup
 
         // Create the credential provider to be used with the Bot Framework Adapter.
         services.AddSingleton<ICredentialProvider, ConfigurationCredentialProvider>();
+
+        // Create the Bot Framework Adapter with error handling enabled.
+        services.AddSingleton<IBotFrameworkHttpAdapter, AdapterWithErrorHandler>();
 
         // The Dialog that will be run by the bot.
         services.AddSingleton<MainDialog>();
@@ -73,6 +74,24 @@ public class Startup
             options.Cookie.IsEssential = true;
         });
 
+        // Add Application Insights services into service collection
+        services.AddApplicationInsightsTelemetry();
+
+        // Create the telemetry client.
+        services.AddSingleton<IBotTelemetryClient, BotTelemetryClient>();
+
+        // Add ASP middleware to store the http body mapped with bot activity key in the httpcontext.items. This will be picked by the TelemetryBotIdInitializer
+        services.AddTransient<TelemetrySaveBodyASPMiddleware>();
+
+        // Add telemetry initializer that will set the correlation context for all telemetry items.
+        services.AddSingleton<ITelemetryInitializer, OperationCorrelationTelemetryInitializer>();
+
+        // Add telemetry initializer that sets the user ID and session ID (in addition to other bot-specific properties such as activity ID)
+        services.AddSingleton<ITelemetryInitializer, TelemetryBotIdInitializer>();
+
+        // Create the telemetry middleware to track conversation events
+        services.AddSingleton<IMiddleware, TelemetryLoggerMiddleware>();
+
         // Create the bot as a transient. In this case the ASP Controller is expecting an IBot.
         services.AddTransient<IBot, AuthBot<MainDialog>>();
     }
@@ -92,6 +111,7 @@ public class Startup
         app.UseDefaultFiles();
         app.UseStaticFiles();
         app.UseSession();
+        app.UseBotApplicationInsights();
 
         //app.UseHttpsRedirection();
         app.UseMvc();

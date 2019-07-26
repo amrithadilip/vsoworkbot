@@ -1,3 +1,5 @@
+namespace VSOWorkBot.Extensions
+{
 using System;
 using System.Collections.Generic;
 using System.Net.Http;
@@ -10,8 +12,6 @@ using Microsoft.WindowsAzure.Storage.Table;
 using Newtonsoft.Json;
 using VSOWorkBot.Models;
 
-namespace VSOWorkBot.Extensions
-{
 public class AuthHelper
 {
     private readonly string url;
@@ -96,6 +96,11 @@ public class AuthHelper
     {
         // Query all entities in the table
         var activityEntities = await table.ExecuteAsync(TableOperation.Retrieve<BotTokenEntity>(conversationId, userId, botTokenEntityResolver));
+        if (activityEntities?.Result == null || !(activityEntities.Result is BotTokenEntity))
+        {
+            return null;
+        }
+
         return (activityEntities.Result as BotTokenEntity).Token;
     }
 

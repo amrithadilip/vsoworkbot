@@ -4,13 +4,27 @@
     <TargetFramework>netcoreapp2.1</TargetFramework>
   </PropertyGroup>
 
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <PlatformTarget>x64</PlatformTarget>
+  </PropertyGroup>
+
   <ItemGroup>
+    <PackageReference Include="AdaptiveCards" Version="1.2.0" />
     <PackageReference Include="CoreHelpers.WindowsAzure.Storage.Table" Version="2.5.93" />
+    <PackageReference Include="Microsoft.ApplicationInsights" Version="2.10.0" />
     <PackageReference Include="Microsoft.AspNetCore.App" />
+    <PackageReference Include="Microsoft.Bot.Builder.AI.Luis" Version="4.5.1" />
+    <PackageReference Include="Microsoft.Bot.Builder.ApplicationInsights" Version="4.5.1" />
+    <PackageReference Include="Microsoft.Bot.Builder.Integration.ApplicationInsights.Core" Version="4.5.1" />
     <PackageReference Include="Microsoft.Bot.Builder.Integration.AspNet.Core" Version="4.5.1" />
     <PackageReference Include="Microsoft.Bot.Builder.Dialogs" Version="4.5.1" />
     <PackageReference Include="AspNet.Security.OAuth.VisualStudio" Version="2.1.0" />
+    <PackageReference Include="Microsoft.Extensions.Logging.ApplicationInsights" Version="2.10.0" />
     <PackageReference Include="Newtonsoft.Json" Version="12.0.2" />
+    <PackageReference Include="Microsoft.TeamFoundationServer.Client" Version="16.143.2" />
+    <PackageReference Include="Microsoft.VisualStudio.Services.Client" Version="16.143.2" />
+    <PackageReference Include="Microsoft.VisualStudio.Services.InteractiveClient" Version="16.143.2" />
+    <PackageReference Include="System.Net.Requests" Version="4.3.0" />
   </ItemGroup>
 
  <ItemGroup>

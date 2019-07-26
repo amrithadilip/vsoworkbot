@@ -1,7 +1,7 @@
-using Newtonsoft.Json;
-
 namespace VSOWorkBot.Models
 {
+using Newtonsoft.Json;
+
 public class VSOToken
 {
     [JsonProperty("access_token")]
