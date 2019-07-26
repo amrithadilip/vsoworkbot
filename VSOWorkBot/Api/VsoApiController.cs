@@ -36,7 +36,7 @@
 
         public static GitPullRequest CreatePullRequest(GitRepository repo)
         {
-            var vssCredentials = new VssBasicCredential(string.Empty, "lckkdu5e3h64pm2xg434ku7daolewtvv27wyua7rm7xopcy23wca");
+            var vssCredentials = new VssBasicCredential(string.Empty, string.Empty);
             VssConnection vssConnection = new VssConnection(GenerateBaseApiUri(), vssCredentials);
 
             using (GitHttpClient gitClient = vssConnection.GetClient<GitHttpClient>())
@@ -55,7 +55,7 @@
 
         public async Task<IEnumerable<TeamProjectCollectionReference>> GetProjectCollections()
         {
-            var vssCredentials = new VssBasicCredential(string.Empty, "lckkdu5e3h64pm2xg434ku7daolewtvv27wyua7rm7xopcy23wca");
+            var vssCredentials = new VssBasicCredential(string.Empty, string.Empty);
             VssConnection vssConnection = new VssConnection(GenerateBaseApiUri(), vssCredentials);
             IEnumerable<TeamProjectCollectionReference> projectCollections = new List<TeamProjectCollectionReference>();
 
@@ -79,7 +79,7 @@
 
         public async Task<IEnumerable<WorkItem>> GetWorkItemByQueryAsync(string projectCollection, string projectName, Wiql wiql)
         {
-            var vssCredentials = new VssBasicCredential(string.Empty, "lckkdu5e3h64pm2xg434ku7daolewtvv27wyua7rm7xopcy23wca");
+            var vssCredentials = new VssBasicCredential(string.Empty, string.Empty);
             VssConnection vssConnection = new VssConnection(GenerateBaseApiUri(projectCollection), vssCredentials);
             IEnumerable<WorkItem> workItems = new List<WorkItem>();
             using (var client = vssConnection.GetClient<WorkItemTrackingHttpClient>())
@@ -128,7 +128,7 @@
                 return null;
             }
 
-            var vssCredentials = new VssBasicCredential(string.Empty, "lckkdu5e3h64pm2xg434ku7daolewtvv27wyua7rm7xopcy23wca");
+            var vssCredentials = new VssBasicCredential(string.Empty, string.Empty);
             VssConnection vssConnection = new VssConnection(GenerateBaseApiUri(projectCollection), vssCredentials);
             WorkItem workItem = default(WorkItem);
             using (var client = vssConnection.GetClient<WorkItemTrackingHttpClient>())
@@ -148,7 +148,7 @@
 
         public async Task<WorkItem> CreateWorkItemAsync(string projectCollection, string projectName, string projectAreaPath, string title, string description, string reproSteps, string priority, string severity, WorkItemType workItemType)
         {
-            var vssCredentials = new VssBasicCredential(string.Empty, "lckkdu5e3h64pm2xg434ku7daolewtvv27wyua7rm7xopcy23wca");
+            var vssCredentials = new VssBasicCredential(string.Empty, string.Empty);
             VssConnection vssConnection = new VssConnection(GenerateBaseApiUri(projectCollection), vssCredentials);
             WorkItem workItem = default(WorkItem);
             using (var client = vssConnection.GetClient<WorkItemTrackingHttpClient>())
@@ -232,7 +232,7 @@
                 return null;
             }
 
-            var vssCredentials = new VssBasicCredential(string.Empty, "lckkdu5e3h64pm2xg434ku7daolewtvv27wyua7rm7xopcy23wca");
+            var vssCredentials = new VssBasicCredential(string.Empty, string.Empty);
             VssConnection vssConnection = new VssConnection(GenerateBaseApiUri(projectCollection), vssCredentials);
             WorkItem workItem = default(WorkItem);
             using (var client = vssConnection.GetClient<WorkItemTrackingHttpClient>())
