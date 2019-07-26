@@ -1,15 +1,17 @@
 namespace VSOWorkBot.Extensions
 {
-	using System;
 	using System.Collections.Generic;
-	using System.Net.Http;
 	using System.Net.Http.Headers;
+	using System.Net.Http;
 	using System.Threading.Tasks;
+	using System.Threading;
 	using System.Web;
+	using System;
+	using Microsoft.Bot.Builder;
 	using Microsoft.Bot.Schema;
 	using Microsoft.Extensions.Configuration;
-	using Microsoft.WindowsAzure.Storage;
 	using Microsoft.WindowsAzure.Storage.Table;
+	using Microsoft.WindowsAzure.Storage;
 	using Newtonsoft.Json;
 	using VSOWorkBot.Models;
 
@@ -31,7 +33,9 @@ namespace VSOWorkBot.Extensions
 
 		private readonly string profileUrl = "https://app.vssps.visualstudio.com/_apis/profile/profiles/me";
 
-		public AuthHelper(IConfiguration configuration)
+		protected readonly IStatePropertyAccessor<AuthenticatedProfile> profileAccessor;
+
+		public AuthHelper(IConfiguration configuration, UserState userState)
 		{
 			// Register the current API Url
 			url = configuration["API_URL"];
@@ -44,6 +48,8 @@ namespace VSOWorkBot.Extensions
 			CloudTableClient tableClient = storageAccount.CreateCloudTableClient();
 			table = tableClient.GetTableReference("BotAccessTokens");
 			table.CreateIfNotExistsAsync();
+
+			profileAccessor = userState.CreateProperty<AuthenticatedProfile>("AuthenticatedProfile");
 		}
 
 		public string GetSignInUrl(string conversationId, string userId)
@@ -63,14 +69,14 @@ namespace VSOWorkBot.Extensions
 			using (var client = new HttpClient())
 			{
 				var body = new Dictionary<string, string> {
-			{
-			"client_assertion_type",
-			"urn:ietf:params:oauth:client-assertion-type:jwt-bearer"
-			},
-			{ "client_assertion", clientSecret },
-			{ "grant_type", refresh? "refresh_token": "urn:ietf:params:oauth:grant-type:jwt-bearer" },
-			{ "assertion", codeOrToken },
-			{ "redirect_uri", $"{url}/oauth-callback" }
+						{
+							"client_assertion_type",
+							"urn:ietf:params:oauth:client-assertion-type:jwt-bearer"
+						},
+						{ "client_assertion", clientSecret },
+						{ "grant_type", refresh? "refresh_token": "urn:ietf:params:oauth:grant-type:jwt-bearer" },
+						{ "assertion", codeOrToken },
+						{ "redirect_uri", $"{url}/oauth-callback" }
 					};
 				var response = await client.PostAsync(tokenUrl, new FormUrlEncodedContent(body));
 				var content = await response.Content.ReadAsStringAsync();
@@ -78,12 +84,29 @@ namespace VSOWorkBot.Extensions
 			}
 		}
 
-		public async Task<AuthenticatedProfile> GetAuthenticatedProfileAsync(Activity activity)
+		public async Task<AuthenticatedProfile> GetAuthenticatedProfileAsync(ITurnContext context, CancellationToken cancellationToken)
 		{
+			var localProfile = await profileAccessor.GetAsync(context, null, cancellationToken);
+			if (localProfile != null)
+			{
+				// TODO: Check expiriy of the token and profile;
+				return localProfile;
+			}
 			// Query all entities in the table
+			var activity = context.Activity;
 			var activityEntities = await table.ExecuteAsync(TableOperation.Retrieve<AuthenticationTableEntity>(activity.Conversation.Id, activity.From.Id, AuthenticationTableEntity.Resolver));
 			var authenticationEntity = activityEntities.Result as AuthenticationTableEntity;
-			return await DeserializeProfile(authenticationEntity);
+			try
+			{
+				var authenticatedProfile = await DeserializeProfile(authenticationEntity);
+				await profileAccessor.SetAsync(context, authenticatedProfile, cancellationToken);
+				return authenticatedProfile;
+			}
+			catch
+			{
+				// TODO Don't catch Pokemons :P
+				return null;
+			}
 		}
 
 		public async Task SaveAuthenticatedProfileAsync(string conversationId, string userId, VSOToken token, UserProfile profile)

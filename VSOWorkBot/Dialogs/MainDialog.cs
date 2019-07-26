@@ -15,6 +15,7 @@ using VSOWorkBot.Api;
 using VSOWorkBot.Extensions;
 using VSOWorkBot.Helpers;
 using VSOWorkBot.Interfaces;
+using VSOWorkBot.Models;
 
 namespace VSOWorkBot.Dialogs
 {
@@ -24,28 +25,20 @@ namespace VSOWorkBot.Dialogs
 
 		protected readonly AuthHelper authHelper;
 
-		protected readonly UserState userState;
-
-		protected readonly IStatePropertyAccessor<string> tokenAccessor;
-
 		protected readonly IConfiguration configuration;
 
-		public MainDialog(IConfiguration configuration, ILogger<MainDialog> logger, IBotTelemetryClient telemetryClient, UserState userState, AuthHelper authHelper)
-			: base(nameof(MainDialog), authHelper, configuration)
+		public MainDialog(IConfiguration configuration, ILogger<MainDialog> logger, IBotTelemetryClient telemetryClient, UserState userState, AuthHelper authHelper) : base(nameof(MainDialog), authHelper, configuration)
 		{
 			this.logger = logger;
 			this.authHelper = authHelper;
-			this.userState = userState;
-			this.tokenAccessor = userState.CreateProperty<string>("VSOToken");
 			this.configuration = configuration;
 			TelemetryClient = telemetryClient;
 			IVsoApiController vsoApiController = new VsoApiHelper(logger);
 
-			AddDialog(new GetWorkItemDialog(configuration, logger, telemetryClient, userState, authHelper, vsoApiController));
-			AddDialog(new SignInDialog(configuration, logger, telemetryClient, userState, authHelper));
-			AddDialog(new WaterfallDialog(nameof(WaterfallDialog), new WaterfallStep[]
-			{
-			ActStepAsync,
+			AddDialog(new GetWorkItemDialog(configuration, logger, telemetryClient, authHelper, vsoApiController));
+			AddDialog(new SignInDialog(configuration, logger, telemetryClient, authHelper));
+			AddDialog(new WaterfallDialog(nameof(WaterfallDialog), new WaterfallStep[] {
+				ActStepAsync,
 			})
 			{
 				TelemetryClient = telemetryClient,
@@ -57,8 +50,8 @@ namespace VSOWorkBot.Dialogs
 
 		private async Task<DialogTurnResult> ActStepAsync(WaterfallStepContext stepContext, CancellationToken cancellationToken)
 		{
-			var token = stepContext.Result == null ? await authHelper.GetTokenAsync(stepContext.Context.Activity) : stepContext.Result.ToString();
-			if (string.IsNullOrEmpty(token))
+			var profile = await authHelper.GetAuthenticatedProfileAsync(stepContext.Context, cancellationToken);
+			if (profile == null)
 			{
 				return await stepContext.BeginDialogAsync(nameof(SignInDialog), cancellationToken: cancellationToken);
 			}
@@ -72,7 +65,6 @@ namespace VSOWorkBot.Dialogs
 			// Run the BookingDialog giving it whatever details we have from the LUIS call, it will fill out the remainder.
 			return await stepContext.BeginDialogAsync(nameof(GetWorkItemDialog), workItemInput, cancellationToken);
 		}
-
 
 		private ThumbnailCard GetSignInCard(Activity activity)
 		{
