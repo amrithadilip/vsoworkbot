@@ -53,7 +53,7 @@ public class CancelAndLogoutDialog : ComponentDialog
 
     private async Task<DialogTurnResult> InterruptAsync(DialogContext innerDc, CancellationToken cancellationToken = default(CancellationToken))
     {
-        if (innerDc.Context.Activity.Type != ActivityTypes.Message)
+        if (innerDc.Context.Activity.Type != ActivityTypes.Message || innerDc.Context.Activity.Text == null || innerDc.Context.Activity.Speak == null)
         {
             return null;
         }

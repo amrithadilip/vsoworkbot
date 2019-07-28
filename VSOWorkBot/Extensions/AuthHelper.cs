@@ -99,7 +99,7 @@ namespace VSOWorkBot.Extensions
 			try
 			{
 				var authenticatedProfile = await DeserializeProfile(authenticationEntity);
-				await profileAccessor.SetAsync(context, authenticatedProfile, cancellationToken);
+				await profileAccessor.SetAsync(context, authenticatedProfile, cancellationToken).ConfigureAwait(false);
 				return authenticatedProfile;
 			}
 			catch

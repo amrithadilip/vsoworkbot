@@ -1,6 +1,5 @@
 {
   "type": "message",
-  "speak": "Hi! I'm Vso work bot! I'll help you manage your work items!",
   "attachments": [
     {
       "contentType": "application/vnd.microsoft.card.adaptive",
@@ -29,14 +28,15 @@
                             "type": "TextBlock",
                             "text": "{{bugId}}: {{bugTitle}}",
                             "weight": "Bolder",
-                            "size": "Large",
+                            "size": "Medium",
                             "height": "stretch",
-                            "maxLines": 2
+                            "maxLines": 3,
+                            "wrap": true
                           },
                           {
                             "type": "TextBlock",
                             "text": "{{bugStatus}}",
-                            "spacing": "None"
+                            "spacing": "Small"
                           }
                         ]
                       }
@@ -44,17 +44,21 @@
                   },
                   {
                     "type": "TextBlock",
-                    "text": "{{bugDescription}}",
-                    "weight": "Bolder",
-                    "spacing": "Medium",
-                    "maxLines": 5
-                  },
-                  {
-                    "type": "TextBlock",
-                    "text": "{{numberOfUpdates}} new updates.",
-                    "spacing": "Large"
+                    "text": "Last updated in {{lastUpdated}}",
+                    "spacing": "Small"
                   }
                 ]
+              }
+            ]
+          },
+          {
+            "type": "ActionSet",
+            "actions": [
+              {
+                "type": "Action.OpenUrl",
+                "title": "Open bug",
+                "url": "{{bugUrl}}",
+                "style": "positive"
               }
             ]
           }

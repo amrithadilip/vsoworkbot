@@ -148,12 +148,7 @@
         public async Task<WorkItem> CreateWorkItemAsync(
             string projectCollection,
             string projectName,
-            string projectAreaPath,
-            string title,
-            string description,
-            string reproSteps,
-            string priority, 
-            string severity, 
+            IDictionary<string, string> fieldToValueMappings, 
             WorkItemType workItemType,
             string accessToken)
         {
@@ -165,61 +160,18 @@
                 try
                 {
                     JsonPatchDocument patchDocument = new JsonPatchDocument();
-
-                    //add fields and their values to your patch document
-                    patchDocument.Add(
-                        new JsonPatchOperation()
-                        {
-                            Operation = Operation.Add,
-                            Path = "/fields/System.Title",
-                            Value = title
-                        }
-                    );
-
-                    patchDocument.Add(
-                        new JsonPatchOperation()
-                        {
-                            Operation = Operation.Add,
-                            Path = "/fields/System.Description",
-                            Value = description
-                        }
-                    );
-
-                    patchDocument.Add(
-                        new JsonPatchOperation()
-                        {
-                            Operation = Operation.Add,
-                            Path = "/fields/Microsoft.VSTS.TCM.ReproSteps",
-                            Value = reproSteps
-                        }
-                    );
-
-                    patchDocument.Add(
-                        new JsonPatchOperation()
-                        {
-                            Operation = Operation.Add,
-                            Path = "/fields/Microsoft.VSTS.Common.Priority",
-                            Value = priority
-                        }
-                    );
-
-                    patchDocument.Add(
-                        new JsonPatchOperation()
-                        {
-                            Operation = Operation.Add,
-                            Path = "/fields/Microsoft.VSTS.Common.Severity",
-                            Value = severity
-                        }
-                    );
-
-                    patchDocument.Add(
-                        new JsonPatchOperation()
-                        {
-                            Operation = Operation.Add,
-                            Path = "/fields/System.AreaPath",
-                            Value = projectAreaPath
-                        }
-                    );
+                    foreach (var kvp in fieldToValueMappings)
+                    {
+                        //add fields and their values to your patch document
+                        patchDocument.Add(
+                            new JsonPatchOperation()
+                            {
+                                Operation = Operation.Add,
+                                Path = kvp.Key,
+                                Value = kvp.Value,
+                            }
+                        );
+                    }
 
                     workItem = await client.CreateWorkItemAsync(patchDocument, projectName, workItemType.ToString()).ConfigureAwait(false);
                     return workItem;
