@@ -1,0 +1,46 @@
+{
+  "type": "message",
+  "attachments": [
+    {
+      "contentType": "application/vnd.microsoft.card.adaptive",
+      "content": {
+        "type": "AdaptiveCard",
+        "version": "1.0",
+        "body": [
+          {
+            "type": "Container",
+            "items": [
+              {
+                "type": "TextBlock",
+                "text": "Please enter the project information:"
+              }
+            ]
+          },
+          {
+            "type": "Input.Text",
+            "placeholder": "Project collection name",
+            "id": "ProjectCollection"
+          },
+          {
+            "type": "Input.Text",
+            "placeholder": "Project name",
+            "spacing": "Medium",
+            "id": "ProjectName"
+          },
+          {
+            "type": "ActionSet",
+            "actions": [
+              {
+                "type": "Action.Submit",
+                "title": "Submit",
+                "style":  "positive"
+              }
+            ],
+            "spacing": "Medium"
+          }
+        ],
+        "$schema": "http://adaptivecards.io/schemas/adaptive-card.json"
+      }
+    }
+  ]
+}

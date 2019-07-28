@@ -1,0 +1,78 @@
+{
+  "type": "message",
+  "attachments": [
+    {
+      "contentType": "application/vnd.microsoft.card.adaptive",
+      "content": {
+        "type": "AdaptiveCard",
+        "version": "1.0",
+        "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
+        "body": [
+          {
+            "type": "ColumnSet",
+            "columns": [
+              {
+                "type": "Column",
+                "width": "stretch",
+                "items": [
+                  {
+                    "type": "TextBlock",
+                    "text": "Fill in the template",
+                    "weight": "Bolder",
+                    "size": "Medium",
+                    "height": "stretch"
+                  },
+                  {
+                    "type": "Input.Text",
+                    "title": "New Input.Toggle",
+                    "placeholder": "Title",
+                    "id": "WorkItemTitle",
+                    "spacing": "Medium"
+                  },
+                  {
+                    "type": "Input.Text",
+                    "title": "New Input.Toggle",
+                    "placeholder": "Area path",
+                    "id": "AreaPath"
+                  },
+                  {
+                    "type": "Input.Text",
+                    "title": "New Input.Toggle",
+                    "placeholder": "Iteration path",
+                    "id": "IterationPath"
+                  },
+                  {
+                    "type": "Input.Text",
+                    "title": "New Input.Toggle",
+                    "placeholder": "Description",
+                    "id": "WorkItemDescription",
+                    "isMultiline": true
+                  },
+                  {
+                    "type": "Input.Number",
+                    "title": "New Input.Toggle",
+                    "placeholder": "Priority (0-4)",
+                    "id": "Priority",
+                    "value": "",
+                    "min": "0",
+                    "max": "4"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "type": "ActionSet",
+            "actions": [
+              {
+                "type": "Action.Submit",
+                "title": "Create a task",
+                "style": "positive"
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

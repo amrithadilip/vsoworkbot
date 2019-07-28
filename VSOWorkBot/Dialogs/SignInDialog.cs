@@ -11,8 +11,10 @@
 	using Microsoft.Extensions.Configuration;
 	using Microsoft.Extensions.Logging;
 	using VSOWorkBot.Extensions;
+    using Newtonsoft.Json;
+    using VSOWorkBot.Helpers;
 
-	public class SignInDialog : CancelAndLogoutDialog
+    public class SignInDialog : CancelAndLogoutDialog
 	{
 		private AuthHelper authHelper;
 
@@ -40,16 +42,12 @@
 
 		private async Task<DialogTurnResult> PromptStepAsync(WaterfallStepContext stepContext, CancellationToken cancellationToken)
 		{
-			// Cards are sent as Attachments in the Bot Framework.
-			// So we need to create a list of attachments for the reply activity.
-			var attachments = new List<Attachment>() {
-				GetSignInCard (stepContext.Context.Activity).ToAttachment ()
-			};
-
 			// Reply to the activity we received with an activity.
-			var reply = MessageFactory.Attachment(attachments);
+            var cardText = await CardProvider.GetCardText("WelcomeCard").ConfigureAwait(false);
+            var replyActivity = JsonConvert.DeserializeObject<Activity>(cardText);
+            replyActivity.Attachments.Add(GetSignInCard(stepContext.Context.Activity).ToAttachment());
 
-			await stepContext.Context.SendActivityAsync(reply, cancellationToken).ConfigureAwait(false);
+            await stepContext.Context.SendActivityAsync(replyActivity, cancellationToken).ConfigureAwait(false);
 			return await stepContext.BeginDialogAsync(nameof(ConfirmPrompt), new PromptOptions { Prompt = MessageFactory.Text("Did you have a successful login?") }, cancellationToken);
 		}
 
