@@ -111,7 +111,7 @@ namespace VSOWorkBot.Extensions
 
 		public async Task SaveAuthenticatedProfileAsync(string conversationId, string userId, VSOToken token, UserProfile profile)
 		{
-			TableOperation insertActivity = TableOperation.Insert(new AuthenticationTableEntity
+			TableOperation insertActivity = TableOperation.InsertOrReplace(new AuthenticationTableEntity
 			{
 				PartitionKey = conversationId,
 				RowKey = userId,
