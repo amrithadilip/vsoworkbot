@@ -49,13 +49,6 @@
                     "isMultiline": true
                   },
                   {
-                    "type": "Input.Text",
-                    "title": "New Input.Toggle",
-                    "placeholder": "Repro steps",
-                    "isMultiline": true,
-                    "id": "WorkItemReproSteps"
-                  },
-                  {
                     "type": "Input.Number",
                     "title": "New Input.Toggle",
                     "placeholder": "Priority (0-4)",
@@ -73,7 +66,7 @@
             "actions": [
               {
                 "type": "Action.Submit",
-                "title": "Create a bug",
+                "title": "Create a {{workitemType}}",
                 "style": "positive"
               }
             ]

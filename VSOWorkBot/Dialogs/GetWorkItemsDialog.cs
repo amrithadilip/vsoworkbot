@@ -18,7 +18,7 @@
 	using VSOWorkBot.Interfaces;
 	using VSOWorkBot.Models;
 
-	public class GetWorkItemDialog : CancelAndLogoutDialog
+	public class GetWorkItemsDialog : CancelAndLogoutDialog
 	{
 		private IVsoApiController vsoApiController;
 
@@ -26,7 +26,9 @@
 
 		private AuthHelper authHelper;
 
-		public GetWorkItemDialog(IConfiguration configuration, ILogger logger, AuthHelper authHelper, IVsoApiController vsoApiController)
+        protected readonly IStatePropertyAccessor<WorkItemInput> workItemInputAccessor;
+
+        public GetWorkItemsDialog(IConfiguration configuration, ILogger logger, AuthHelper authHelper, IVsoApiController vsoApiController, UserState userState)
 			: base(nameof(GetWorkItemDialog), authHelper, configuration)
 		{
             PromptValidator<Activity> promptValidator = new PromptValidator<Activity>(PromptValidatorStep);
@@ -47,9 +49,9 @@
 			this.authHelper = authHelper;
 			this.logger = logger;
 			this.vsoApiController = vsoApiController;
-
-			// The initial child Dialog to run.
-			InitialDialogId = nameof(WaterfallDialog);
+            this.workItemInputAccessor = userState.CreateProperty<WorkItemInput>("InputForGetWorkItems");
+            // The initial child Dialog to run.
+            InitialDialogId = nameof(WaterfallDialog);
 		}
 
 		private async Task<DialogTurnResult> PromptForProjectCollectionAndProjectName(WaterfallStepContext stepContext, CancellationToken cancellationToken)
@@ -68,6 +70,25 @@
             }
 
             return Task.FromResult(true);
+        }
+
+        private async Task<DialogTurnResult> GetProjectInfo(WaterfallStepContext stepContext, CancellationToken cancellationToken)
+        {
+            if (!(stepContext.Options is RecognizerResult))
+            {
+                return await stepContext.EndDialogAsync(null, cancellationToken);
+            }
+
+            var recognizerResult = (RecognizerResult)stepContext.Options;
+            var workItemType = Utilities.GetWorkItemType(recognizerResult.Entities);
+            var workItemInput = new WorkItemInput { WorkItemType = workItemType };
+
+            var activity = stepContext.Result as Activity;
+            var projectInfo = JObject.Parse(activity.Value.ToString());
+            workItemInput.ProjectCollection = projectInfo["ProjectCollection"].ToString();
+            workItemInput.ProjectName = projectInfo["ProjectName"].ToString();
+            await workItemInputAccessor.SetAsync(stepContext.Context, workItemInput, cancellationToken).ConfigureAwait(false);
+            return await stepContext.NextAsync(null, cancellationToken);
         }
 
         private async Task<DialogTurnResult> FinalStepAsync(WaterfallStepContext stepContext, CancellationToken cancellationToken)
