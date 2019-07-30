@@ -17,7 +17,6 @@ namespace VSOWorkBot
 	using VSOWorkBot.Bots;
 	using VSOWorkBot.Dialogs;
 	using VSOWorkBot.Extensions;
-	using VSOWorkBot.Api;
 	using Microsoft.ApplicationInsights.Extensibility;
 	using Microsoft.Bot.Builder.ApplicationInsights;
 	using Microsoft.Bot.Builder.Integration.ApplicationInsights.Core;
