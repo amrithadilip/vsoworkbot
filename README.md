@@ -1,4 +1,6 @@
 ﻿# VSOWorkBot
+ 
+[![Build Status](https://dev.azure.com/bazingacouple/Pipelines/_apis/build/status/amrithadilip.vsoworkbot?branchName=master)](https://dev.azure.com/bazingacouple/Pipelines/_build/latest?definitionId=3&branchName=master)
 
 Bot Framework v4 empty bot sample.
 
