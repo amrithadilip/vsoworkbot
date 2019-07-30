@@ -231,15 +231,15 @@
             return projectCollection != null ? new Uri($"https://dev.azure.com/{projectCollection}") : new Uri($"https://dev.azure.com");
         }
 
-        private static Wiql ContructWiqlQuery(WorkItemInput WorkItemInput)
+        private static Wiql ContructWiqlQuery(WorkItemInput workItemInput)
         {
             return new Wiql()
             {
                 Query = "Select [State], [Title] [Description]" +
                         "From WorkItems " +
-                        "Where [Work Item Type] = 'Bug' " +
-                        "And [System.TeamProject] = '" + "Cortana" + "' " +
-                        "And [System.State] <> 'Active' " +
+                        $"Where [Work Item Type] = '{workItemInput.WorkItemType}' " +
+                        $"And [System.TeamProject] = '{workItemInput.ProjectName}' " +
+                        $"And [System.State] <> '{workItemInput.WorkItemStatus}' " +
                         "Order By [State] Asc, [Changed Date] Desc"
             };
         }

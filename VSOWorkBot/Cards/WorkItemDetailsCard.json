@@ -26,7 +26,7 @@
                         "items": [
                           {
                             "type": "TextBlock",
-                            "text": "{{bugId}}: {{bugTitle}}",
+                            "text": "{{workitemId}}: {{workitemTitle}}",
                             "weight": "Bolder",
                             "size": "Medium",
                             "height": "stretch",
@@ -35,7 +35,7 @@
                           },
                           {
                             "type": "TextBlock",
-                            "text": "{{bugStatus}}",
+                            "text": "{{workitemStatus}}",
                             "spacing": "Small"
                           }
                         ]
@@ -56,8 +56,8 @@
             "actions": [
               {
                 "type": "Action.OpenUrl",
-                "title": "Open bug",
-                "url": "{{bugUrl}}",
+                "title": "Open {{workitemType}}",
+                "url": "{{workitemUrl}}",
                 "style": "positive"
               }
             ]
