@@ -9,9 +9,10 @@ using Microsoft.AspNetCore.Mvc.Controllers;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Bot.Builder;
 using Microsoft.Bot.Builder.Integration.AspNet.Core;
-using VSOWorkBot.Controllers;
 using Moq;
 using Xunit;
+
+using VSOWorkBot.Controllers;
 
 namespace VSOWorkBot.Tests.Controllers
 {

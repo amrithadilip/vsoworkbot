@@ -4,14 +4,15 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-using VSOWorkBot.Tests.Common;
 using Microsoft.Bot.Builder;
 using Microsoft.Bot.Builder.Adapters;
 using Microsoft.Bot.Builder.Dialogs;
-using VSOWorkBot.Bots;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Xunit;
+
+using VSOWorkBot.Bots;
+using VSOWorkBot.Tests.Common;
 
 namespace VSOWorkBot.Tests.Bots
 {
